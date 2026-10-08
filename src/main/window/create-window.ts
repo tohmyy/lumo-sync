@@ -1,5 +1,6 @@
-import { BrowserWindow, shell } from 'electron'
+import { BrowserWindow } from 'electron'
 import { join } from 'path'
+import { attachNavigationGuards } from '../security/navigation'
 import { createLogger } from '../logging/logger'
 
 const log = createLogger('window')
@@ -12,12 +13,15 @@ export function createMainWindow(): BrowserWindow {
     minHeight: 640,
     show: false,
     title: 'LumoSync',
+    autoHideMenuBar: true,
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
       contextIsolation: true,
       nodeIntegration: false,
       sandbox: true,
-      webSecurity: true
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      experimentalFeatures: false
     }
   })
 
@@ -25,10 +29,7 @@ export function createMainWindow(): BrowserWindow {
     window.show()
   })
 
-  window.webContents.setWindowOpenHandler((details) => {
-    void shell.openExternal(details.url)
-    return { action: 'deny' }
-  })
+  attachNavigationGuards(window)
 
   if (process.env.ELECTRON_RENDERER_URL) {
     void window.loadURL(process.env.ELECTRON_RENDERER_URL)

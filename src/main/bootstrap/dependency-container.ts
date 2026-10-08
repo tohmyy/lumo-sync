@@ -10,6 +10,7 @@ import { createLogger } from '../logging/logger'
 import { createId, nowIso } from '../../shared/utils'
 import type { DevicePlatform } from '../../shared/types'
 import { FileRemoteClient, SyncEngine, SyncScheduler } from '../sync'
+import { CredentialStore } from '../security'
 
 const log = createLogger('container')
 
@@ -20,6 +21,7 @@ export interface AppContainer {
   events: EventBus
   syncEngine: SyncEngine
   syncScheduler: SyncScheduler
+  credentials: CredentialStore
 }
 
 function resolveDatabasePath(): string {
@@ -39,6 +41,14 @@ function resolveSyncStorePath(): string {
     return join(process.cwd(), 'data', 'sync-store.json')
   }
   return join(app.getPath('userData'), 'sync', 'sync-store.json')
+}
+
+function resolveSecretsDir(): string {
+  const useDev = process.env.LUMOSYNC_DEV_DB === 'true' || !app.isPackaged
+  if (useDev) {
+    return join(process.cwd(), 'data', 'secrets')
+  }
+  return join(app.getPath('userData'), 'secrets')
 }
 
 function mapPlatform(): DevicePlatform {
@@ -100,6 +110,7 @@ export function createContainer(): AppContainer {
   const remote = new FileRemoteClient(syncStorePath)
   const syncEngine = new SyncEngine(db, repos, remote, events)
   const syncScheduler = new SyncScheduler(syncEngine)
+  const credentials = new CredentialStore(resolveSecretsDir())
 
   const services = createServices(repos, events, {
     engine: syncEngine,
@@ -111,5 +122,5 @@ export function createContainer(): AppContainer {
   registerIpcHandlers(services)
   syncScheduler.start()
 
-  return { db, repos, services, events, syncEngine, syncScheduler }
+  return { db, repos, services, events, syncEngine, syncScheduler, credentials }
 }

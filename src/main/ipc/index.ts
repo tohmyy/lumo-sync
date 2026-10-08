@@ -7,11 +7,16 @@ import { registerSearchHandlers } from './search.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
 import { registerSyncHandlers } from './sync.handlers'
 import { registerTagHandlers } from './tags.handlers'
+import { ALLOWED_IPC_CHANNELS, assertAllowedIpcChannel } from '../security'
 import { createLogger } from '../logging/logger'
 
 const log = createLogger('ipc')
 
 export function registerIpcHandlers(services: Services): void {
+  for (const channel of ALLOWED_IPC_CHANNELS) {
+    assertAllowedIpcChannel(channel)
+  }
+
   registerAssetHandlers(services)
   registerCollectionHandlers(services)
   registerTagHandlers(services)
@@ -20,7 +25,7 @@ export function registerIpcHandlers(services: Services): void {
   registerSettingsHandlers(services)
   registerDeviceHandlers(services)
   registerSyncHandlers(services)
-  log.info('IPC handlers registered')
+  log.info({ channels: ALLOWED_IPC_CHANNELS.length }, 'IPC handlers registered')
 }
 
 export { EventBus } from './event-bus'

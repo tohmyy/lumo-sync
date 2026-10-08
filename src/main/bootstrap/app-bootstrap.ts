@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron'
 import { createContainer, type AppContainer } from './dependency-container'
 import { createMainWindow } from '../window/create-window'
 import { closeDatabase } from '../database/connection'
+import { hardenSession } from '../security'
 import { createLogger } from '../logging/logger'
 
 const log = createLogger('bootstrap')
@@ -11,6 +12,7 @@ let mainWindow: BrowserWindow | null = null
 
 export async function bootstrapApp(): Promise<void> {
   await app.whenReady()
+  hardenSession()
 
   log.info('Starting LumoSync')
   container = createContainer()
