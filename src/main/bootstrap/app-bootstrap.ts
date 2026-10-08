@@ -16,14 +16,17 @@ export async function bootstrapApp(): Promise<void> {
   container = createContainer()
 
   mainWindow = createMainWindow()
+  container.events.setWindow(mainWindow)
 
   mainWindow.on('closed', () => {
+    container?.events.setWindow(null)
     mainWindow = null
   })
 
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
       mainWindow = createMainWindow()
+      container?.events.setWindow(mainWindow)
     }
   })
 

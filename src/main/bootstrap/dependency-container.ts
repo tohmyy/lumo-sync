@@ -4,6 +4,8 @@ import { app } from 'electron'
 import { openDatabase, type SqliteDatabase } from '../database/connection'
 import { runMigrations } from '../database/migrations/runner'
 import { createRepositories, type Repositories } from '../database/repositories'
+import { EventBus, registerIpcHandlers } from '../ipc'
+import { createServices, type Services } from '../services'
 import { createLogger } from '../logging/logger'
 import { createId, nowIso } from '../../shared/utils'
 import type { DevicePlatform } from '../../shared/types'
@@ -13,6 +15,8 @@ const log = createLogger('container')
 export interface AppContainer {
   db: SqliteDatabase
   repos: Repositories
+  services: Services
+  events: EventBus
 }
 
 function resolveDatabasePath(): string {
@@ -77,7 +81,11 @@ export function createContainer(): AppContainer {
   runMigrations(db)
 
   const repos = createRepositories(db)
-  initializeFirstRun(db, repos)
+  const events = new EventBus()
+  const services = createServices(repos, events)
 
-  return { db, repos }
+  initializeFirstRun(db, repos)
+  registerIpcHandlers(services)
+
+  return { db, repos, services, events }
 }

@@ -1,0 +1,95 @@
+.debug-panel {
+  display: grid;
+  gap: 16px;
+  max-width: 720px;
+}
+
+.debug-card {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+}
+
+.debug-card h2,
+.debug-card h3 {
+  margin: 0 0 8px;
+}
+
+.debug-card p {
+  margin: 0 0 12px;
+  color: var(--text-muted);
+}
+
+.debug-actions {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.debug-actions button {
+  border: 0;
+  border-radius: 8px;
+  padding: 8px 14px;
+  background: var(--accent);
+  color: white;
+}
+
+.debug-actions button.secondary {
+  background: transparent;
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.debug-card dl {
+  margin: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.debug-card dl div {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 8px;
+}
+
+.debug-card dt {
+  color: var(--text-muted);
+}
+
+.debug-card dd {
+  margin: 0;
+}
+
+.asset-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.asset-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.asset-list li span {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.ok {
+  color: var(--accent) !important;
+}
+
+.err {
+  color: var(--danger) !important;
+}
+
+.muted {
+  color: var(--text-muted);
+}
