@@ -1,0 +1,41 @@
+:root {
+  --bg: #f3f0ea;
+  --bg-elevated: #faf8f4;
+  --sidebar: #ebe6dc;
+  --border: #d4cdc0;
+  --text: #1c1915;
+  --text-muted: #6b645a;
+  --accent: #0f6b5c;
+  --accent-soft: #d7efe9;
+  --danger: #9b2c2c;
+  --font-sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
+  --font-mono: 'Cascadia Code', 'Consolas', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  font-family: var(--font-sans);
+  color: var(--text);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+}
+
+button {
+  font: inherit;
+  cursor: pointer;
+}
+
+code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+}
