@@ -37,6 +37,8 @@ export interface UpdateAssetInput {
   tags?: string[]
 }
 
+export type AssetSortBy = 'updated' | 'created' | 'title' | 'opened'
+
 export interface AssetListQuery {
   type?: AssetType
   isFavorite?: boolean
@@ -44,4 +46,7 @@ export interface AssetListQuery {
   limit?: number
   offset?: number
   search?: string
+  sortBy?: AssetSortBy
+  tag?: string
+  collectionId?: string
 }

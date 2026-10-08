@@ -91,26 +91,16 @@ export class AssetRepository {
       return this.listWithSearch(query)
     }
 
-    const clauses: string[] = []
-    const params: unknown[] = []
+    const { clauses, joinParams, whereParams, joins } = this.buildListFilters(query, 'a')
+    const from = `assets a ${joins.join(' ')}`
+    const orderBy = this.buildOrderBy(query, false)
+    const params: unknown[] = [...joinParams, ...whereParams]
 
-    if (!query.includeDeleted) {
-      clauses.push('deleted_at IS NULL')
-    }
-    if (query.type) {
-      clauses.push('type = ?')
-      params.push(query.type)
-    }
-    if (query.isFavorite !== undefined) {
-      clauses.push('is_favorite = ?')
-      params.push(query.isFavorite ? 1 : 0)
-    }
-
-    let sql = 'SELECT * FROM assets'
+    let sql = `SELECT DISTINCT a.* FROM ${from}`
     if (clauses.length) {
       sql += ` WHERE ${clauses.join(' AND ')}`
     }
-    sql += ' ORDER BY updated_at DESC'
+    sql += ` ${orderBy}`
 
     if (query.limit) {
       sql += ' LIMIT ?'
@@ -292,27 +282,18 @@ export class AssetRepository {
       return this.list({ ...query, search: undefined })
     }
 
-    const clauses = ['asset_search MATCH ?']
-    const params: unknown[] = [search]
-
-    if (!query.includeDeleted) {
-      clauses.push('a.deleted_at IS NULL')
-    }
-    if (query.type) {
-      clauses.push('a.type = ?')
-      params.push(query.type)
-    }
-    if (query.isFavorite !== undefined) {
-      clauses.push('a.is_favorite = ?')
-      params.push(query.isFavorite ? 1 : 0)
-    }
+    const { clauses, joinParams, whereParams, joins } = this.buildListFilters(query, 'a')
+    clauses.unshift('asset_search MATCH ?')
+    const params: unknown[] = [...joinParams, search, ...whereParams]
+    const orderBy = this.buildOrderBy(query, true)
 
     let sql = `
-      SELECT a.*
+      SELECT DISTINCT a.*
       FROM asset_search
       JOIN assets a ON a.id = asset_search.asset_id
+      ${joins.join(' ')}
       WHERE ${clauses.join(' AND ')}
-      ORDER BY rank
+      ${orderBy}
     `
 
     if (query.limit) {
@@ -326,6 +307,70 @@ export class AssetRepository {
 
     const rows = this.db.prepare(sql).all(...params) as AssetRow[]
     return rows.map((row) => this.toAsset(row))
+  }
+
+  private buildListFilters(
+    query: AssetListQuery,
+    alias: string
+  ): {
+    clauses: string[]
+    joinParams: unknown[]
+    whereParams: unknown[]
+    joins: string[]
+  } {
+    const clauses: string[] = []
+    const joinParams: unknown[] = []
+    const whereParams: unknown[] = []
+    const joins: string[] = []
+
+    if (!query.includeDeleted) {
+      clauses.push(`${alias}.deleted_at IS NULL`)
+    }
+    if (query.type) {
+      clauses.push(`${alias}.type = ?`)
+      whereParams.push(query.type)
+    }
+    if (query.isFavorite !== undefined) {
+      clauses.push(`${alias}.is_favorite = ?`)
+      whereParams.push(query.isFavorite ? 1 : 0)
+    }
+    if (query.tag?.trim()) {
+      joins.push(
+        `JOIN asset_tags at_filter ON at_filter.asset_id = ${alias}.id`,
+        `JOIN tags t_filter ON t_filter.id = at_filter.tag_id AND t_filter.deleted_at IS NULL`
+      )
+      clauses.push(`t_filter.normalized_name = ?`)
+      whereParams.push(query.tag.trim().toLowerCase())
+    }
+    if (query.collectionId) {
+      joins.push(
+        `JOIN collection_assets ca_filter ON ca_filter.asset_id = ${alias}.id AND ca_filter.collection_id = ?`
+      )
+      joinParams.push(query.collectionId)
+    }
+    if (query.sortBy === 'opened') {
+      joins.push(`LEFT JOIN recent_assets ra_sort ON ra_sort.asset_id = ${alias}.id`)
+    }
+
+    return { clauses, joinParams, whereParams, joins }
+  }
+
+  private buildOrderBy(query: AssetListQuery, fromSearch: boolean): string {
+    const sortBy = query.sortBy ?? 'updated'
+    if (fromSearch && sortBy === 'updated') {
+      return 'ORDER BY rank'
+    }
+    switch (sortBy) {
+      case 'created':
+        return 'ORDER BY a.created_at DESC'
+      case 'title':
+        return 'ORDER BY a.title COLLATE NOCASE ASC'
+      case 'opened':
+        return 'ORDER BY CASE WHEN ra_sort.opened_at IS NULL THEN 1 ELSE 0 END, ra_sort.opened_at DESC'
+      case 'updated':
+      default:
+        return 'ORDER BY a.updated_at DESC'
+    }
   }
 
   private toAsset(row: AssetRow): Asset {

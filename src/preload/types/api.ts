@@ -2,6 +2,7 @@ import type {
   Asset,
   AssetListQuery,
   Collection,
+  CollectionWithCount,
   CreateAssetInput,
   CreateCollectionInput,
   CreateTagInput,
@@ -27,7 +28,7 @@ export interface LumoSyncApi {
     restore: (id: string) => Promise<IpcResult<Asset>>
   }
   collections: {
-    list: () => Promise<IpcResult<Collection[]>>
+    list: () => Promise<IpcResult<CollectionWithCount[]>>
     get: (id: string) => Promise<IpcResult<Collection>>
     create: (input: CreateCollectionInput) => Promise<IpcResult<Collection>>
     update: (id: string, input: UpdateCollectionInput) => Promise<IpcResult<Collection>>

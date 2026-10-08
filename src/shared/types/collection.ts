@@ -9,6 +9,10 @@ export interface Collection {
   updatedByDeviceId: string | null
 }
 
+export interface CollectionWithCount extends Collection {
+  assetCount: number
+}
+
 export interface CreateCollectionInput {
   name: string
   description?: string

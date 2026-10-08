@@ -222,6 +222,54 @@ describe('repositories', () => {
     }
   })
 
+  it('filters and sorts assets for organization views', () => {
+    const ctx = createTestDb()
+    try {
+      const deviceId = seedCurrentDevice(ctx.repos)
+      const alpha = ctx.repos.assets.create(
+        {
+          type: 'snippet',
+          title: 'Alpha',
+          content: 'a',
+          tags: ['react'],
+          isFavorite: true
+        },
+        deviceId
+      )
+      const beta = ctx.repos.assets.create(
+        {
+          type: 'command',
+          title: 'Beta',
+          content: 'b',
+          tags: ['docker']
+        },
+        deviceId
+      )
+      const collection = ctx.repos.collections.create({ name: 'Frontend' }, deviceId)
+      ctx.repos.collections.addAsset(collection.id, alpha.id)
+      ctx.repos.recent.track(beta.id)
+
+      expect(ctx.repos.assets.list({ tag: 'react' }).map((a) => a.id)).toEqual([alpha.id])
+      expect(ctx.repos.assets.list({ collectionId: collection.id }).map((a) => a.id)).toEqual([
+        alpha.id
+      ])
+      expect(ctx.repos.assets.list({ isFavorite: true }).map((a) => a.id)).toEqual([alpha.id])
+      expect(ctx.repos.assets.list({ sortBy: 'title' }).map((a) => a.title)).toEqual([
+        'Alpha',
+        'Beta'
+      ])
+      expect(ctx.repos.assets.list({ sortBy: 'opened' })[0]?.id).toBe(beta.id)
+      expect(
+        ctx.repos.assets.list({ search: 'Alpha', isFavorite: true }).map((a) => a.id)
+      ).toEqual([alpha.id])
+
+      const withCounts = ctx.repos.collections.listWithCounts()
+      expect(withCounts.find((c) => c.id === collection.id)?.assetCount).toBe(1)
+    } finally {
+      ctx.dispose()
+    }
+  })
+
   it('hydrates tags and enqueues sync operations', () => {
     const ctx = createTestDb()
     try {

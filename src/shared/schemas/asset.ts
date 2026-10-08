@@ -23,13 +23,18 @@ export const updateAssetSchema = z.object({
   tags: z.array(z.string()).optional()
 })
 
+export const assetSortBySchema = z.enum(['updated', 'created', 'title', 'opened'])
+
 export const assetListQuerySchema = z.object({
   type: assetTypeSchema.optional(),
   isFavorite: z.boolean().optional(),
   includeDeleted: z.boolean().optional(),
   limit: z.number().int().positive().max(500).optional(),
   offset: z.number().int().nonnegative().optional(),
-  search: z.string().optional()
+  search: z.string().optional(),
+  sortBy: assetSortBySchema.optional(),
+  tag: z.string().optional(),
+  collectionId: entityIdSchema.optional()
 })
 
 export const assetIdSchema = z.object({

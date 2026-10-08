@@ -1,5 +1,6 @@
 import type {
   Collection,
+  CollectionWithCount,
   CreateCollectionInput,
   UpdateCollectionInput
 } from '../../../shared/types'
@@ -51,6 +52,29 @@ export class CollectionRepository {
       : 'SELECT * FROM collections WHERE deleted_at IS NULL ORDER BY name COLLATE NOCASE'
     const rows = this.db.prepare(sql).all() as CollectionRow[]
     return rows.map(mapCollection)
+  }
+
+  listWithCounts(includeDeleted = false): CollectionWithCount[] {
+    const deletedClause = includeDeleted ? '' : 'WHERE c.deleted_at IS NULL'
+    const rows = this.db
+      .prepare(
+        `SELECT c.*,
+                (
+                  SELECT COUNT(*)
+                  FROM collection_assets ca
+                  JOIN assets a ON a.id = ca.asset_id AND a.deleted_at IS NULL
+                  WHERE ca.collection_id = c.id
+                ) AS asset_count
+         FROM collections c
+         ${deletedClause}
+         ORDER BY c.name COLLATE NOCASE`
+      )
+      .all() as Array<CollectionRow & { asset_count: number }>
+
+    return rows.map((row) => ({
+      ...mapCollection(row),
+      assetCount: row.asset_count
+    }))
   }
 
   update(id: string, input: UpdateCollectionInput, deviceId: string): Collection {

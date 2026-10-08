@@ -1,5 +1,6 @@
 import type {
   Collection,
+  CollectionWithCount,
   CreateCollectionInput,
   UpdateCollectionInput
 } from '../../shared/types'
@@ -16,8 +17,8 @@ export class CollectionService {
     return device.id
   }
 
-  list(): Collection[] {
-    return this.repos.collections.list()
+  list(): CollectionWithCount[] {
+    return this.repos.collections.listWithCounts()
   }
 
   get(id: string): Collection {
