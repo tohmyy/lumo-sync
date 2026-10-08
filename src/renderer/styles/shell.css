@@ -82,4 +82,12 @@
   flex: 1;
   padding: 24px;
   overflow: auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content > * {
+  flex: 1;
+  min-height: 0;
 }

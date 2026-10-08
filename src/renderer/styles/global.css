@@ -10,6 +10,11 @@
   --danger: #9b2c2c;
   --font-sans: 'Segoe UI', 'Helvetica Neue', sans-serif;
   --font-mono: 'Cascadia Code', 'Consolas', monospace;
+  color-scheme: light;
+}
+
+button:disabled {
+  cursor: default;
 }
 
 * {

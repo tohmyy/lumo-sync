@@ -22,12 +22,14 @@ export default [
       globals: {
         window: 'readonly',
         document: 'readonly',
+        navigator: 'readonly',
         console: 'readonly',
         process: 'readonly',
         __dirname: 'readonly',
         Buffer: 'readonly',
         setTimeout: 'readonly',
-        clearTimeout: 'readonly'
+        clearTimeout: 'readonly',
+        BeforeUnloadEvent: 'readonly'
       }
     },
     plugins: {
