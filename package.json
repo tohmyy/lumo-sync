@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "private": true,
   "description": "LumoSync — Local-First Code & Asset Manager",
+  "author": "LumoSync",
+  "license": "UNLICENSED",
+  "homepage": "https://github.com/example/lumo-sync",
   "main": "./out/main/index.js",
   "scripts": {
     "dev": "electron-vite dev",
@@ -15,11 +18,16 @@
     "test": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs run",
     "test:watch": "cross-env ELECTRON_RUN_AS_NODE=1 electron ./node_modules/vitest/vitest.mjs",
     "rebuild:native": "electron-rebuild -f -w better-sqlite3",
-    "postinstall": "electron-rebuild -f -w better-sqlite3"
+    "postinstall": "electron-rebuild -f -w better-sqlite3",
+    "dist": "pnpm build && electron-builder --config electron-builder.yml",
+    "dist:dir": "pnpm build && electron-builder --config electron-builder.yml --dir",
+    "dist:win": "pnpm build && electron-builder --config electron-builder.yml --win",
+    "checksums": "node scripts/checksums.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",
     "better-sqlite3": "^11.8.1",
+    "electron-updater": "^6.8.9",
     "pino": "^9.6.0",
     "uuid": "^11.1.0",
     "zod": "^3.24.2",
@@ -39,6 +47,7 @@
     "@vitejs/plugin-react": "^4.3.4",
     "cross-env": "^10.1.0",
     "electron": "^34.3.0",
+    "electron-builder": "^26.15.3",
     "electron-vite": "^3.0.0",
     "eslint": "^9.22.0",
     "eslint-config-prettier": "^10.1.1",

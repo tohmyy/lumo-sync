@@ -1,0 +1,46 @@
+appId: com.lumosync.app
+productName: LumoSync
+copyright: Copyright © LumoSync
+directories:
+  output: release
+  buildResources: build
+files:
+  - out/**/*
+  - package.json
+asar: true
+asarUnpack:
+  - '**/node_modules/better-sqlite3/**/*'
+  - '**/node_modules/bindings/**/*'
+  - '**/node_modules/file-uri-to-path/**/*'
+extraResources: []
+# Publish target placeholder — set GH_TOKEN / publisher name for real releases.
+# publish:
+#   provider: github
+#   owner: your-org
+#   repo: lumo-sync
+win:
+  target:
+    - target: nsis
+      arch: [x64]
+    - target: portable
+      arch: [x64]
+  # Code signing (optional): set CSC_LINK + CSC_KEY_PASSWORD
+mac:
+  target:
+    - target: dmg
+      arch: [x64, arm64]
+  category: public.app-category.developer-tools
+  # Code signing (optional): set Apple notarization env vars for distribution
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Development
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  createDesktopShortcut: true
+portable:
+  artifactName: '${productName}-${version}-portable.${ext}'
+artifactName: '${productName}-${version}-${os}-${arch}.${ext}'
+generateUpdatesFilesForAllChannels: true

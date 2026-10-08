@@ -3,6 +3,7 @@ import { createContainer, type AppContainer } from './dependency-container'
 import { createMainWindow } from '../window/create-window'
 import { closeDatabase } from '../database/connection'
 import { hardenSession } from '../security'
+import { initAutoUpdater } from '../updates/auto-update'
 import { createLogger } from '../logging/logger'
 
 const log = createLogger('bootstrap')
@@ -19,6 +20,10 @@ export async function bootstrapApp(): Promise<void> {
 
   mainWindow = createMainWindow()
   container.events.setWindow(mainWindow)
+
+  void initAutoUpdater().then((snapshot) => {
+    log.info({ update: snapshot }, 'Update check finished')
+  })
 
   mainWindow.on('closed', () => {
     container?.events.setWindow(null)
