@@ -1,0 +1,6 @@
+export { SyncEngine } from './sync-engine'
+export { FileRemoteClient } from './file-remote-client'
+export { SyncStateStore } from './sync-state-store'
+export { ConflictStore } from './conflict-store'
+export { applyRemoteOperations } from './apply-remote'
+export { SyncScheduler } from './sync-scheduler'

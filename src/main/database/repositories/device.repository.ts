@@ -62,4 +62,52 @@ export class DeviceRepository {
 
     return this.getById(current.id)
   }
+
+  upsertRemote(input: {
+    id: string
+    name: string
+    platform: DevicePlatform
+    appVersion?: string
+    lastSeenAt: string
+  }): Device {
+    const existing = this.getById(input.id)
+    const now = nowIso()
+    if (existing) {
+      if (existing.isCurrent) {
+        return existing
+      }
+      this.db
+        .prepare(
+          `UPDATE devices SET
+            name = ?, platform = ?, app_version = ?, last_seen_at = ?, updated_at = ?
+           WHERE id = ?`
+        )
+        .run(
+          input.name,
+          input.platform,
+          input.appVersion ?? null,
+          input.lastSeenAt,
+          now,
+          input.id
+        )
+      return this.getById(input.id)!
+    }
+
+    this.db
+      .prepare(
+        `INSERT INTO devices (
+          id, name, platform, app_version, is_current, last_seen_at, created_at, updated_at
+        ) VALUES (?, ?, ?, ?, 0, ?, ?, ?)`
+      )
+      .run(
+        input.id,
+        input.name,
+        input.platform,
+        input.appVersion ?? null,
+        input.lastSeenAt,
+        now,
+        now
+      )
+    return this.getById(input.id)!
+  }
 }
