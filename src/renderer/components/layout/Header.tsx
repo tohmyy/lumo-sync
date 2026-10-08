@@ -1,4 +1,5 @@
 import type { JSX } from 'react'
+import { SyncStatusIndicator } from '../sync/SyncStatusIndicator'
 
 interface HeaderProps {
   title: string
@@ -12,6 +13,7 @@ export function Header({ title, subtitle }: HeaderProps): JSX.Element {
         <h1>{title}</h1>
         {subtitle ? <p>{subtitle}</p> : null}
       </div>
+      <SyncStatusIndicator />
     </header>
   )
 }

@@ -9,6 +9,8 @@ export type AppView =
   | 'collections'
   | 'collection-detail'
   | 'tags'
+  | 'sync'
+  | 'conflicts'
 
 export interface AssetDraft {
   type: AssetType

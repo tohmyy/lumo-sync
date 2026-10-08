@@ -10,6 +10,8 @@ const NAV_ITEMS: Array<{ id: AppView | 'settings'; label: string; enabled: boole
   { id: 'recent', label: 'Recent', enabled: true },
   { id: 'collections', label: 'Collections', enabled: true },
   { id: 'tags', label: 'Tags', enabled: true },
+  { id: 'sync', label: 'Sync', enabled: true },
+  { id: 'conflicts', label: 'Conflicts', enabled: true },
   { id: 'settings', label: 'Settings', enabled: false }
 ]
 

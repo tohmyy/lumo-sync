@@ -47,3 +47,14 @@ export const recentKeys = {
   all: ['recent'] as const,
   list: () => [...recentKeys.all, 'list'] as const
 }
+
+export const syncKeys = {
+  all: ['sync'] as const,
+  status: () => [...syncKeys.all, 'status'] as const,
+  conflicts: () => [...syncKeys.all, 'conflicts'] as const
+}
+
+export const deviceKeys = {
+  all: ['devices'] as const,
+  list: () => [...deviceKeys.all, 'list'] as const
+}
