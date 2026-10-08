@@ -69,34 +69,40 @@ function applyAssetOperation(
       }
     | undefined
 
-  // Concurrent divergence: local moved past the remote operation's base version
-  if (
-    existing &&
-    op.baseVersion !== null &&
-    existing.version > op.baseVersion &&
-    existing.version !== payload.version
-  ) {
-    const localPayload = JSON.stringify({
-      id: existing.id,
-      type: existing.type,
-      title: existing.title,
-      description: existing.description,
-      language: existing.language,
-      content: existing.content,
-      isFavorite: existing.is_favorite === 1,
-      version: existing.version,
-      deletedAt: existing.deleted_at,
-      tags: []
-    })
-    conflicts.create({
-      entityType: 'asset',
-      entityId: op.entityId,
-      localVersion: existing.version,
-      remoteVersion: payload.version,
-      localPayload,
-      remotePayload: op.payload
-    })
-    return 'conflict'
+  // Concurrent divergence: local is not at the version this remote op expected.
+  // Equal version numbers from independent edits still conflict when content differs.
+  if (existing && op.baseVersion !== null && existing.version !== op.baseVersion) {
+    const sameContent =
+      existing.title === payload.title &&
+      existing.content === payload.content &&
+      existing.description === payload.description &&
+      existing.language === payload.language &&
+      (existing.is_favorite === 1) === payload.isFavorite &&
+      existing.deleted_at === payload.deletedAt
+
+    if (!sameContent) {
+      const localPayload = JSON.stringify({
+        id: existing.id,
+        type: existing.type,
+        title: existing.title,
+        description: existing.description,
+        language: existing.language,
+        content: existing.content,
+        isFavorite: existing.is_favorite === 1,
+        version: existing.version,
+        deletedAt: existing.deleted_at,
+        tags: []
+      })
+      conflicts.create({
+        entityType: 'asset',
+        entityId: op.entityId,
+        localVersion: existing.version,
+        remoteVersion: payload.version,
+        localPayload,
+        remotePayload: op.payload
+      })
+      return 'conflict'
+    }
   }
 
   withTransaction(db, () => {
