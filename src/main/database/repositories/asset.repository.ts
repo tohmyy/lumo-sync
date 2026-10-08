@@ -9,6 +9,7 @@ import { createId, nowIso } from '../../../shared/utils'
 import type { SqliteDatabase } from '../connection'
 import { withTransaction } from '../connection'
 import { mapAsset, type AssetRow } from '../mappers'
+import { enqueueAssetSyncOperation, type SyncAssetOperation } from '../sync-operations'
 
 export class AssetRepository {
   constructor(private readonly db: SqliteDatabase) {}
@@ -66,13 +67,15 @@ export class AssetRepository {
         this.syncTags(id, input.tags, now)
       }
 
-      return this.getByIdOrThrow(id)
+      const asset = this.getByIdOrThrow(id)
+      this.enqueueSync(asset, 'create', null)
+      return asset
     })
   }
 
   getById(id: string): Asset | null {
     const row = this.db.prepare('SELECT * FROM assets WHERE id = ?').get(id) as AssetRow | undefined
-    return row ? mapAsset(row) : null
+    return row ? this.toAsset(row) : null
   }
 
   getByIdOrThrow(id: string): Asset {
@@ -84,6 +87,10 @@ export class AssetRepository {
   }
 
   list(query: AssetListQuery = {}): Asset[] {
+    if (query.search?.trim()) {
+      return this.listWithSearch(query)
+    }
+
     const clauses: string[] = []
     const params: unknown[] = []
 
@@ -115,7 +122,7 @@ export class AssetRepository {
     }
 
     const rows = this.db.prepare(sql).all(...params) as AssetRow[]
-    return rows.map(mapAsset)
+    return rows.map((row) => this.toAsset(row))
   }
 
   update(id: string, input: UpdateAssetInput, deviceId: string): Asset {
@@ -185,7 +192,9 @@ export class AssetRepository {
         this.syncTags(id, input.tags, now)
       }
 
-      return this.getByIdOrThrow(id)
+      const asset = this.getByIdOrThrow(id)
+      this.enqueueSync(asset, 'update', existing.version)
+      return asset
     })
   }
 
@@ -221,6 +230,9 @@ export class AssetRepository {
       })
 
       this.db.prepare('DELETE FROM asset_search WHERE asset_id = ?').run(id)
+
+      const asset = this.getByIdOrThrow(id)
+      this.enqueueSync(asset, 'delete', existing.version)
     })
   }
 
@@ -264,24 +276,81 @@ export class AssetRepository {
         language: existing.language
       })
 
-      return this.getByIdOrThrow(id)
+      const asset = this.getByIdOrThrow(id)
+      this.enqueueSync(asset, 'restore', existing.version)
+      return asset
     })
   }
 
   search(query: string, limit = 50): Asset[] {
+    return this.listWithSearch({ search: query, limit })
+  }
+
+  private listWithSearch(query: AssetListQuery): Asset[] {
+    const search = query.search?.trim()
+    if (!search) {
+      return this.list({ ...query, search: undefined })
+    }
+
+    const clauses = ['asset_search MATCH ?']
+    const params: unknown[] = [search]
+
+    if (!query.includeDeleted) {
+      clauses.push('a.deleted_at IS NULL')
+    }
+    if (query.type) {
+      clauses.push('a.type = ?')
+      params.push(query.type)
+    }
+    if (query.isFavorite !== undefined) {
+      clauses.push('a.is_favorite = ?')
+      params.push(query.isFavorite ? 1 : 0)
+    }
+
+    let sql = `
+      SELECT a.*
+      FROM asset_search
+      JOIN assets a ON a.id = asset_search.asset_id
+      WHERE ${clauses.join(' AND ')}
+      ORDER BY rank
+    `
+
+    if (query.limit) {
+      sql += ' LIMIT ?'
+      params.push(query.limit)
+      if (query.offset) {
+        sql += ' OFFSET ?'
+        params.push(query.offset)
+      }
+    }
+
+    const rows = this.db.prepare(sql).all(...params) as AssetRow[]
+    return rows.map((row) => this.toAsset(row))
+  }
+
+  private toAsset(row: AssetRow): Asset {
+    return mapAsset(row, this.getTagNames(row.id))
+  }
+
+  private getTagNames(assetId: string): string[] {
     const rows = this.db
       .prepare(
-        `SELECT a.*
-         FROM asset_search
-         JOIN assets a ON a.id = asset_search.asset_id
-         WHERE asset_search MATCH ?
-           AND a.deleted_at IS NULL
-         ORDER BY rank
-         LIMIT ?`
+        `SELECT t.name
+         FROM asset_tags at
+         JOIN tags t ON t.id = at.tag_id
+         WHERE at.asset_id = ? AND t.deleted_at IS NULL
+         ORDER BY t.name COLLATE NOCASE`
       )
-      .all(query, limit) as AssetRow[]
+      .all(assetId) as Array<{ name: string }>
+    return rows.map((r) => r.name)
+  }
 
-    return rows.map(mapAsset)
+  private enqueueSync(
+    asset: Asset,
+    operation: SyncAssetOperation,
+    baseVersion: number | null
+  ): void {
+    enqueueAssetSyncOperation(this.db, { asset, operation, baseVersion })
   }
 
   private insertRevision(args: {

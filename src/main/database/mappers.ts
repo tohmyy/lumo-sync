@@ -53,7 +53,7 @@ export interface RecentRow {
   open_count: number
 }
 
-export function mapAsset(row: AssetRow): Asset {
+export function mapAsset(row: AssetRow, tags: string[] = []): Asset {
   return {
     id: row.id,
     type: row.type as AssetType,
@@ -67,7 +67,8 @@ export function mapAsset(row: AssetRow): Asset {
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
     createdByDeviceId: row.created_by_device_id,
-    updatedByDeviceId: row.updated_by_device_id
+    updatedByDeviceId: row.updated_by_device_id,
+    tags
   }
 }
 

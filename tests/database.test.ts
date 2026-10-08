@@ -213,6 +213,53 @@ describe('repositories', () => {
       const results = ctx.repos.assets.search('fetch')
       expect(results).toHaveLength(1)
       expect(results[0]?.title).toBe('Fetch API Example')
+
+      const listed = ctx.repos.assets.list({ search: 'fetch' })
+      expect(listed).toHaveLength(1)
+      expect(listed[0]?.title).toBe('Fetch API Example')
+    } finally {
+      ctx.dispose()
+    }
+  })
+
+  it('hydrates tags and enqueues sync operations', () => {
+    const ctx = createTestDb()
+    try {
+      const deviceId = seedCurrentDevice(ctx.repos)
+      const asset = ctx.repos.assets.create(
+        {
+          type: 'snippet',
+          title: 'Tagged snippet',
+          content: ' const x = 1',
+          language: 'typescript',
+          tags: ['React', 'api']
+        },
+        deviceId
+      )
+
+      expect(asset.tags.map((t) => t.toLowerCase()).sort()).toEqual(['api', 'react'])
+      expect(ctx.repos.assets.getById(asset.id)?.tags).toEqual(asset.tags)
+      expect(ctx.repos.assets.list()[0]?.tags).toEqual(asset.tags)
+
+      const createOps = ctx.db
+        .prepare(
+          `SELECT operation, status, entity_id FROM sync_operations WHERE entity_id = ? ORDER BY created_at`
+        )
+        .all(asset.id) as Array<{ operation: string; status: string; entity_id: string }>
+      expect(createOps).toHaveLength(1)
+      expect(createOps[0]).toMatchObject({
+        operation: 'create',
+        status: 'pending',
+        entity_id: asset.id
+      })
+
+      ctx.repos.assets.update(asset.id, { title: 'Tagged snippet v2' }, deviceId)
+      ctx.repos.assets.softDelete(asset.id, deviceId)
+
+      const ops = ctx.db
+        .prepare(`SELECT operation FROM sync_operations WHERE entity_id = ? ORDER BY created_at`)
+        .all(asset.id) as Array<{ operation: string }>
+      expect(ops.map((o) => o.operation)).toEqual(['create', 'update', 'delete'])
     } finally {
       ctx.dispose()
     }

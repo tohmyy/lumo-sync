@@ -14,6 +14,7 @@ export interface Asset {
   deletedAt: string | null
   createdByDeviceId: string | null
   updatedByDeviceId: string | null
+  tags: string[]
 }
 
 export interface CreateAssetInput {
