@@ -1,7 +1,14 @@
 import { create } from 'zustand'
-import type { AssetType, CreateAssetInput } from '../../shared/types'
+import type { AssetSortBy, AssetType, CreateAssetInput } from '../../shared/types'
 
 export type LibraryMode = 'view' | 'edit' | 'create'
+export type AppView =
+  | 'library'
+  | 'favorites'
+  | 'recent'
+  | 'collections'
+  | 'collection-detail'
+  | 'tags'
 
 export interface AssetDraft {
   type: AssetType
@@ -65,31 +72,68 @@ export function parseTags(tagsText: string): string[] {
 }
 
 interface LibraryState {
+  activeView: AppView
   selectedId: string | null
+  selectedCollectionId: string | null
   mode: LibraryMode
   showDeleted: boolean
-  search: string
+  searchInput: string
+  typeFilter: AssetType | ''
+  tagFilter: string
+  sortBy: AssetSortBy
   draft: AssetDraft
   draftBaseline: AssetDraft | null
+  setView: (view: AppView) => void
+  openCollection: (id: string) => void
   selectAsset: (id: string | null) => void
   startCreate: () => void
   startEdit: (draft: AssetDraft) => void
   setMode: (mode: LibraryMode) => void
   setShowDeleted: (value: boolean) => void
-  setSearch: (value: string) => void
+  setSearchInput: (value: string) => void
+  setTypeFilter: (value: AssetType | '') => void
+  setTagFilter: (value: string) => void
+  setSortBy: (value: AssetSortBy) => void
   setDraft: (draft: AssetDraft) => void
   patchDraft: (patch: Partial<AssetDraft>) => void
   isDirty: () => boolean
   resetEditor: () => void
+  filterByTag: (tag: string) => void
 }
 
 export const useLibraryStore = create<LibraryState>((set, get) => ({
+  activeView: 'library',
   selectedId: null,
+  selectedCollectionId: null,
   mode: 'view',
   showDeleted: false,
-  search: '',
+  searchInput: '',
+  typeFilter: '',
+  tagFilter: '',
+  sortBy: 'updated',
   draft: emptyDraft(),
   draftBaseline: null,
+
+  setView: (activeView) =>
+    set({
+      activeView,
+      selectedCollectionId: activeView === 'collection-detail' ? get().selectedCollectionId : null,
+      selectedId: null,
+      mode: 'view',
+      draft: emptyDraft(),
+      draftBaseline: null,
+      showDeleted: activeView === 'library' ? get().showDeleted : false
+    }),
+
+  openCollection: (id) =>
+    set({
+      activeView: 'collection-detail',
+      selectedCollectionId: id,
+      selectedId: null,
+      mode: 'view',
+      draft: emptyDraft(),
+      draftBaseline: null
+    }),
 
   selectAsset: (id) =>
     set({
@@ -118,7 +162,10 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
 
   setMode: (mode) => set({ mode }),
   setShowDeleted: (showDeleted) => set({ showDeleted }),
-  setSearch: (search) => set({ search }),
+  setSearchInput: (searchInput) => set({ searchInput }),
+  setTypeFilter: (typeFilter) => set({ typeFilter }),
+  setTagFilter: (tagFilter) => set({ tagFilter }),
+  setSortBy: (sortBy) => set({ sortBy }),
   setDraft: (draft) => set({ draft }),
   patchDraft: (patch) => set((state) => ({ draft: { ...state.draft, ...patch } })),
 
@@ -134,5 +181,14 @@ export const useLibraryStore = create<LibraryState>((set, get) => ({
       mode: 'view',
       draft: emptyDraft(),
       draftBaseline: null
+    }),
+
+  filterByTag: (tag) =>
+    set({
+      activeView: 'library',
+      tagFilter: tag,
+      selectedCollectionId: null,
+      selectedId: null,
+      mode: 'view'
     })
 }))

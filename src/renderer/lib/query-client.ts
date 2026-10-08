@@ -31,3 +31,19 @@ export const assetKeys = {
   details: () => [...assetKeys.all, 'detail'] as const,
   detail: (id: string) => [...assetKeys.details(), id] as const
 }
+
+export const collectionKeys = {
+  all: ['collections'] as const,
+  list: () => [...collectionKeys.all, 'list'] as const,
+  detail: (id: string) => [...collectionKeys.all, 'detail', id] as const
+}
+
+export const tagKeys = {
+  all: ['tags'] as const,
+  list: () => [...tagKeys.all, 'list'] as const
+}
+
+export const recentKeys = {
+  all: ['recent'] as const,
+  list: () => [...recentKeys.all, 'list'] as const
+}

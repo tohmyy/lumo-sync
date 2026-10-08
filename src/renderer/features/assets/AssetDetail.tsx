@@ -1,15 +1,20 @@
 import { useState, type JSX } from 'react'
-import type { Asset } from '../../../shared/types'
+import type { Asset, CollectionWithCount } from '../../../shared/types'
 import { AssetEmptyState } from './AssetEmptyState'
 
 interface AssetDetailProps {
   asset: Asset | null
+  collections: CollectionWithCount[]
+  membershipIds: string[]
   loading: boolean
   error: string | null
   onEdit: () => void
   onFavorite: () => void
   onDelete: () => void
   onRestore: () => void
+  onTagClick: (tag: string) => void
+  onAddToCollection: (collectionId: string) => void
+  onRemoveFromCollection: (collectionId: string) => void
   busy?: boolean
 }
 
@@ -23,12 +28,17 @@ function formatUpdated(iso: string): string {
 
 export function AssetDetail({
   asset,
+  collections,
+  membershipIds,
   loading,
   error,
   onEdit,
   onFavorite,
   onDelete,
   onRestore,
+  onTagClick,
+  onAddToCollection,
+  onRemoveFromCollection,
   busy
 }: AssetDetailProps): JSX.Element {
   const [copied, setCopied] = useState(false)
@@ -74,6 +84,7 @@ export function AssetDetail({
   }
 
   const isDeleted = Boolean(asset.deletedAt)
+  const memberSet = new Set(membershipIds)
 
   return (
     <section className="asset-detail-panel">
@@ -118,10 +129,40 @@ export function AssetDetail({
       {asset.tags.length > 0 ? (
         <div className="tag-chips">
           {asset.tags.map((tag) => (
-            <span key={tag} className="tag-chip">
+            <button
+              key={tag}
+              type="button"
+              className="tag-chip clickable"
+              onClick={() => onTagClick(tag)}
+            >
               {tag}
-            </span>
+            </button>
           ))}
+        </div>
+      ) : null}
+
+      {!isDeleted && collections.length > 0 ? (
+        <div className="collection-membership">
+          <p className="field-label">Collections</p>
+          <div className="collection-membership-list">
+            {collections.map((collection) => {
+              const inCollection = memberSet.has(collection.id)
+              return (
+                <label key={collection.id} className="checkbox-label">
+                  <input
+                    type="checkbox"
+                    checked={inCollection}
+                    disabled={busy}
+                    onChange={() => {
+                      if (inCollection) onRemoveFromCollection(collection.id)
+                      else onAddToCollection(collection.id)
+                    }}
+                  />
+                  {collection.name}
+                </label>
+              )
+            })}
+          </div>
         </div>
       ) : null}
 
