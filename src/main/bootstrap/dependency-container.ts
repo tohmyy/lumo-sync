@@ -9,6 +9,7 @@ import { createServices, type Services } from '../services'
 import { createLogger } from '../logging/logger'
 import { createId, nowIso } from '../../shared/utils'
 import type { DevicePlatform } from '../../shared/types'
+import { FileRemoteClient, SyncEngine, SyncScheduler } from '../sync'
 
 const log = createLogger('container')
 
@@ -17,6 +18,8 @@ export interface AppContainer {
   repos: Repositories
   services: Services
   events: EventBus
+  syncEngine: SyncEngine
+  syncScheduler: SyncScheduler
 }
 
 function resolveDatabasePath(): string {
@@ -25,6 +28,17 @@ function resolveDatabasePath(): string {
     return join(process.cwd(), 'data', 'lumosync.db')
   }
   return join(app.getPath('userData'), 'database', 'lumosync.db')
+}
+
+function resolveSyncStorePath(): string {
+  if (process.env.LUMOSYNC_SYNC_STORE) {
+    return process.env.LUMOSYNC_SYNC_STORE
+  }
+  const useDev = process.env.LUMOSYNC_DEV_DB === 'true' || !app.isPackaged
+  if (useDev) {
+    return join(process.cwd(), 'data', 'sync-store.json')
+  }
+  return join(app.getPath('userData'), 'sync', 'sync-store.json')
 }
 
 function mapPlatform(): DevicePlatform {
@@ -75,17 +89,27 @@ function initializeFirstRun(db: SqliteDatabase, repos: Repositories): void {
 
 export function createContainer(): AppContainer {
   const dbPath = resolveDatabasePath()
-  log.info({ dbPath }, 'Opening database')
+  const syncStorePath = resolveSyncStorePath()
+  log.info({ dbPath, syncStorePath }, 'Opening database and sync store')
 
   const db = openDatabase({ path: dbPath })
   runMigrations(db)
 
   const repos = createRepositories(db)
   const events = new EventBus()
-  const services = createServices(repos, events)
+  const remote = new FileRemoteClient(syncStorePath)
+  const syncEngine = new SyncEngine(db, repos, remote, events)
+  const syncScheduler = new SyncScheduler(syncEngine)
+
+  const services = createServices(repos, events, {
+    engine: syncEngine,
+    scheduler: syncScheduler,
+    remote
+  })
 
   initializeFirstRun(db, repos)
   registerIpcHandlers(services)
+  syncScheduler.start()
 
-  return { db, repos, services, events }
+  return { db, repos, services, events, syncEngine, syncScheduler }
 }

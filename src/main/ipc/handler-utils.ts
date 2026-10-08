@@ -9,12 +9,12 @@ const log = createLogger('ipc')
 
 export function handleIpc<TInput, TOutput>(
   schema: ZodSchema<TInput> | null,
-  handler: (input: TInput) => TOutput
-): (_event: IpcMainInvokeEvent, raw?: unknown) => IpcResult<TOutput> {
-  return (_event, raw) => {
+  handler: (input: TInput) => TOutput | Promise<TOutput>
+): (_event: IpcMainInvokeEvent, raw?: unknown) => Promise<IpcResult<TOutput>> {
+  return async (_event, raw) => {
     try {
       const input = schema ? schema.parse(raw ?? undefined) : (undefined as TInput)
-      const data = handler(input)
+      const data = await handler(input)
       return ipcOk(data)
     } catch (error) {
       if (error instanceof ZodError) {

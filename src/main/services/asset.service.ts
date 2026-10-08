@@ -8,11 +8,19 @@ import type { Repositories } from '../database/repositories'
 import type { EventBus } from '../ipc/event-bus'
 import { AppEvents } from '../../shared/constants'
 
+export type SyncMutationHook = () => void
+
 export class AssetService {
+  private onMutation: SyncMutationHook | null = null
+
   constructor(
     private readonly repos: Repositories,
     private readonly events: EventBus
   ) {}
+
+  setMutationHook(hook: SyncMutationHook | null): void {
+    this.onMutation = hook
+  }
 
   private deviceId(): string {
     const device = this.repos.devices.getCurrent()
@@ -20,6 +28,10 @@ export class AssetService {
       throw new Error('Current device is not initialized')
     }
     return device.id
+  }
+
+  private notifyMutation(): void {
+    this.onMutation?.()
   }
 
   list(query?: AssetListQuery): Asset[] {
@@ -33,23 +45,27 @@ export class AssetService {
   create(input: CreateAssetInput): Asset {
     const asset = this.repos.assets.create(input, this.deviceId())
     this.events.emit(AppEvents.assetUpdated, { id: asset.id })
+    this.notifyMutation()
     return asset
   }
 
   update(id: string, input: UpdateAssetInput): Asset {
     const asset = this.repos.assets.update(id, input, this.deviceId())
     this.events.emit(AppEvents.assetUpdated, { id: asset.id })
+    this.notifyMutation()
     return asset
   }
 
   delete(id: string): void {
     this.repos.assets.softDelete(id, this.deviceId())
     this.events.emit(AppEvents.assetDeleted, { id })
+    this.notifyMutation()
   }
 
   restore(id: string): Asset {
     const asset = this.repos.assets.restore(id, this.deviceId())
     this.events.emit(AppEvents.assetUpdated, { id: asset.id })
+    this.notifyMutation()
     return asset
   }
 

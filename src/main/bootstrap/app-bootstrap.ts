@@ -38,6 +38,7 @@ export async function bootstrapApp(): Promise<void> {
 
   app.on('before-quit', () => {
     if (container) {
+      container.syncScheduler.stop()
       closeDatabase(container.db)
       container = null
       log.info('Database closed')

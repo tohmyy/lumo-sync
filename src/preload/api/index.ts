@@ -52,7 +52,15 @@ export function createPreloadApi(): LumoSyncApi {
       update: (key, value) => ipcRenderer.invoke(IpcChannels.settings.update, { key, value })
     },
     device: {
-      getCurrent: () => ipcRenderer.invoke(IpcChannels.device.getCurrent)
+      getCurrent: () => ipcRenderer.invoke(IpcChannels.device.getCurrent),
+      list: () => ipcRenderer.invoke(IpcChannels.device.list)
+    },
+    sync: {
+      status: () => ipcRenderer.invoke(IpcChannels.sync.status),
+      now: () => ipcRenderer.invoke(IpcChannels.sync.now),
+      listConflicts: () => ipcRenderer.invoke(IpcChannels.sync.listConflicts),
+      resolveConflict: (id, resolution) =>
+        ipcRenderer.invoke(IpcChannels.sync.resolveConflict, { id, resolution })
     },
     events: {
       on: (event, handler) => {

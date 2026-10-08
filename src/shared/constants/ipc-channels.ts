@@ -36,7 +36,14 @@ export const IpcChannels = {
     update: 'settings:update'
   },
   device: {
-    getCurrent: 'device:get-current'
+    getCurrent: 'device:get-current',
+    list: 'device:list'
+  },
+  sync: {
+    status: 'sync:status',
+    now: 'sync:now',
+    listConflicts: 'sync:list-conflicts',
+    resolveConflict: 'sync:resolve-conflict'
   }
 } as const
 
@@ -48,3 +55,4 @@ export type IpcChannel =
   | (typeof IpcChannels.recent)[keyof typeof IpcChannels.recent]
   | (typeof IpcChannels.settings)[keyof typeof IpcChannels.settings]
   | (typeof IpcChannels.device)[keyof typeof IpcChannels.device]
+  | (typeof IpcChannels.sync)[keyof typeof IpcChannels.sync]

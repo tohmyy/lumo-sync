@@ -3,14 +3,18 @@ import type {
   AssetListQuery,
   Collection,
   CollectionWithCount,
+  ConflictResolution,
   CreateAssetInput,
   CreateCollectionInput,
   CreateTagInput,
   Device,
   IpcResult,
   RecentAsset,
+  RemoteDeviceInfo,
   Setting,
   SettingsMap,
+  SyncConflictRecord,
+  SyncStatusSnapshot,
   Tag,
   UpdateAssetInput,
   UpdateCollectionInput,
@@ -65,6 +69,22 @@ export interface LumoSyncApi {
   }
   device: {
     getCurrent: () => Promise<IpcResult<Device>>
+    list: () => Promise<
+      IpcResult<{
+        current: Device
+        local: Device[]
+        remote: RemoteDeviceInfo[]
+      }>
+    >
+  }
+  sync: {
+    status: () => Promise<IpcResult<SyncStatusSnapshot>>
+    now: () => Promise<IpcResult<SyncStatusSnapshot>>
+    listConflicts: () => Promise<IpcResult<SyncConflictRecord[]>>
+    resolveConflict: (
+      id: string,
+      resolution: ConflictResolution
+    ) => Promise<IpcResult<SyncConflictRecord>>
   }
   events: {
     on: (event: AppEventName, handler: (payload: unknown) => void) => () => void

@@ -5,6 +5,7 @@ import { registerDeviceHandlers } from './device.handlers'
 import { registerRecentHandlers } from './recent.handlers'
 import { registerSearchHandlers } from './search.handlers'
 import { registerSettingsHandlers } from './settings.handlers'
+import { registerSyncHandlers } from './sync.handlers'
 import { registerTagHandlers } from './tags.handlers'
 import { createLogger } from '../logging/logger'
 
@@ -18,6 +19,7 @@ export function registerIpcHandlers(services: Services): void {
   registerRecentHandlers(services)
   registerSettingsHandlers(services)
   registerDeviceHandlers(services)
+  registerSyncHandlers(services)
   log.info('IPC handlers registered')
 }
 

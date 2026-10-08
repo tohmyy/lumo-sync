@@ -8,4 +8,9 @@ export function registerDeviceHandlers(services: Services): void {
     IpcChannels.device.getCurrent,
     handleIpc(null, () => services.devices.getCurrent())
   )
+
+  ipcMain.handle(
+    IpcChannels.device.list,
+    handleIpc(null, () => services.sync.listDevices())
+  )
 }

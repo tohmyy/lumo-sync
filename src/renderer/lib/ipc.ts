@@ -2,10 +2,15 @@ import type {
   Asset,
   AssetListQuery,
   CollectionWithCount,
+  ConflictResolution,
   CreateAssetInput,
   CreateCollectionInput,
   CreateTagInput,
+  Device,
   RecentAsset,
+  RemoteDeviceInfo,
+  SyncConflictRecord,
+  SyncStatusSnapshot,
   Tag,
   UpdateAssetInput,
   UpdateCollectionInput,
@@ -50,4 +55,24 @@ export const tagsApi = {
 export const recentApi = {
   list: (limit?: number): Promise<RecentAsset[]> => unwrapIpc(window.lumosync.recent.list(limit)),
   track: (assetId: string): Promise<RecentAsset> => unwrapIpc(window.lumosync.recent.track(assetId))
+}
+
+export const syncApi = {
+  status: (): Promise<SyncStatusSnapshot> => unwrapIpc(window.lumosync.sync.status()),
+  now: (): Promise<SyncStatusSnapshot> => unwrapIpc(window.lumosync.sync.now()),
+  listConflicts: (): Promise<SyncConflictRecord[]> =>
+    unwrapIpc(window.lumosync.sync.listConflicts()),
+  resolveConflict: (
+    id: string,
+    resolution: ConflictResolution
+  ): Promise<SyncConflictRecord> => unwrapIpc(window.lumosync.sync.resolveConflict(id, resolution))
+}
+
+export const deviceApi = {
+  getCurrent: (): Promise<Device> => unwrapIpc(window.lumosync.device.getCurrent()),
+  list: (): Promise<{
+    current: Device
+    local: Device[]
+    remote: RemoteDeviceInfo[]
+  }> => unwrapIpc(window.lumosync.device.list())
 }
